@@ -48,8 +48,10 @@ _Noreturn extern void fatal(const char* fmt, ...);
 /////////////////////////////////////////////
 // Put your declarations here
 
-
-
-
+#define N 16
+#define OUT 21
+#define IN N*N+OUT
+#define TEMP_DESC_1 1000
+#define TEMP_DESC_2 1001
 
 #endif // MIMPI_COMMON_H
