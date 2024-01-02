@@ -10,23 +10,6 @@
 #include "mimpi_common.h"
 #include "channel.h"
 
-// Converts and checks correctness of argument n.
-int prog_cnt(char* arg) {
-    int arg_converted = 0;
-    while (*arg != '\0') {
-        if ((int)(*arg) < (int)'0' || (int)'9' < (int)(*arg))
-            fatal("Argument n is in wrong format\n");
-
-        arg_converted = 10 * arg_converted + ((int)(*arg) - (int)'0');
-
-        if (arg_converted > 16)
-            fatal("Argument n is in wrong format\n");
-
-        arg++;
-    }
-    return arg_converted;
-}
-
 int main(int argc, char* argv[]) {
     // Check arg correctness
     if (argc < 3)
@@ -35,10 +18,15 @@ int main(int argc, char* argv[]) {
         printf("%d -> %s\n", i, argv[i]);
     }
 
-    int n = prog_cnt(argv[1]);
+    int n = string_to_no(argv[1]);
+    if (n < 1 || 16 < n)
+        fatal("Argument n is in wrong format\n");
 
     for (int i = 0; i < n; i++) {
         for (int j = 0; j < n; j++) {
+            if (i == j)
+                continue;
+
             int pipefd[2];
             ASSERT_SYS_OK(channel(pipefd));
 
@@ -60,12 +48,28 @@ int main(int argc, char* argv[]) {
         }
     }
 
+    char envvar_name[ENVVAR_LEN];
+    char envvar_value[ENVVAR_LEN];
+
+    sprintf(envvar_name, "MIMPI_WORLD_SIZE");
+    sprintf(envvar_value, "%d", n);
+    
+    ASSERT_SYS_OK(setenv(envvar_name, envvar_value, 1));
+
     for (int i = 0; i < n; i++) {
         pid_t pid;
         ASSERT_SYS_OK(pid = fork());
         if (!pid) {
-            char envvar_name[50];
-            char envvar_value[50];
+
+            for (int i1 = 0; i1 < n; i1++) {
+                for (int i2 = 0; i2 < n; i2++) {
+                    if (!(i2 != i))
+                        ASSERT_SYS_OK(close(OUT + i1 * n + i2));
+                    if (!((i1 == i && i2 != i) || (i1 == i2 && i1 != i)))
+                        ASSERT_SYS_OK(close(IN + i1 * n + i2));
+                }
+            }
+
             sprintf(envvar_name, "MIMPI_%d", getpid());
             sprintf(envvar_value, "%d", i);
 

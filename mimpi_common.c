@@ -44,3 +44,17 @@ _Noreturn void fatal(const char* fmt, ...)
 /////////////////////////////////////////////////
 // Put your implementation here
 
+
+// Converts string to number without UB.
+int string_to_no(char* arg) {
+    int arg_converted = 0;
+    while (*arg != '\0') {
+        if ((int)(*arg) < (int)'0' || (int)'9' < (int)(*arg))
+            fatal("Argument in string_to_no is in wrong format\n");
+
+        arg_converted = 10 * arg_converted + ((int)(*arg) - (int)'0');
+
+        arg++;
+    }
+    return arg_converted;
+}

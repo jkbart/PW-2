@@ -53,5 +53,8 @@ _Noreturn extern void fatal(const char* fmt, ...);
 #define IN N*N+OUT
 #define TEMP_DESC_1 1000
 #define TEMP_DESC_2 1001
+#define ENVVAR_LEN 50
+
+int string_to_no(char* arg);
 
 #endif // MIMPI_COMMON_H
