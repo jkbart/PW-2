@@ -14,9 +14,9 @@ int main(int argc, char* argv[]) {
     // Check arg correctness
     if (argc < 3)
         fatal("Arguments are in wrong format\n");
-    for (int i = 0; i < argc; i++) {
-        printf("%d -> %s\n", i, argv[i]);
-    }
+    // for (int i = 0; i < argc; i++) {
+    //     printf("%d -> %s\n", i, argv[i]);
+    // }
 
     int n = string_to_no(argv[1]);
     if (n < 1 || 16 < n)
@@ -24,8 +24,6 @@ int main(int argc, char* argv[]) {
 
     for (int i = 0; i < n; i++) {
         for (int j = 0; j < n; j++) {
-            if (i == j)
-                continue;
 
             int pipefd[2];
             ASSERT_SYS_OK(channel(pipefd));
@@ -40,10 +38,10 @@ int main(int argc, char* argv[]) {
                 ASSERT_SYS_OK(close(pipefd[1]));
             }
 
-            ASSERT_SYS_OK(dup2(TEMP_DESC_1, OUT + i * n + j));
+            ASSERT_SYS_OK(dup2(TEMP_DESC_1, IN + i * n + j));
             ASSERT_SYS_OK(close(TEMP_DESC_1));
 
-            ASSERT_SYS_OK(dup2(TEMP_DESC_2, IN + i * n + j));
+            ASSERT_SYS_OK(dup2(TEMP_DESC_2, OUT + i * n + j));
             ASSERT_SYS_OK(close(TEMP_DESC_2));
         }
     }
@@ -59,14 +57,25 @@ int main(int argc, char* argv[]) {
     for (int i = 0; i < n; i++) {
         pid_t pid;
         ASSERT_SYS_OK(pid = fork());
+        // sleep(1);
         if (!pid) {
 
+            // printf("----------- %d\n", i);
             for (int i1 = 0; i1 < n; i1++) {
                 for (int i2 = 0; i2 < n; i2++) {
-                    if (!(i2 != i))
+                    // if (!((i2 != i && i1 == i) || (i1 == i2 && i2 != i))) {
+                    if (!((i2 != i && i1 == i) || (i1 == i2))) {
+                        // printf("%d DESC IN (%d -> %d)\n", getpid(), i1, i2);
                         ASSERT_SYS_OK(close(OUT + i1 * n + i2));
-                    if (!((i1 == i && i2 != i) || (i1 == i2 && i1 != i)))
+                    } else {
+                        // printf("%d DESC IN (%d -> %d) %d\n", getpid(), i1, i2, i);
+                    }
+                    if (!(i2 == i)) {
+                        // printf("%d DESC OUT (%d -> %d)\n", getpid(), i1, i2);
                         ASSERT_SYS_OK(close(IN + i1 * n + i2));
+                    } else {
+                        // printf("%d DESC OUT (%d -> %d) %d\n", getpid(), i1, i2, i);
+                    }
                 }
             }
 
@@ -82,6 +91,13 @@ int main(int argc, char* argv[]) {
             // exit(0);
         }
     }
+    for (int i1 = 0; i1 < n; i1++) {
+        for (int i2 = 0; i2 < n; i2++) {
+            ASSERT_SYS_OK(close(IN + i1 * n + i2));
+            ASSERT_SYS_OK(close(OUT + i1 * n + i2));
+        }
+    }
+
     for (int i = 0; i < n; i++)
         wait(NULL);
     
