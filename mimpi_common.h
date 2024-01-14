@@ -10,6 +10,22 @@
 #include <stdbool.h>
 #include <stdnoreturn.h>
 
+
+
+#include <dirent.h>
+#include <errno.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/ptrace.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <unistd.h>
+#define MAX_PATH_LENGTH 1024
+
+
+
+
 /*
     Assert that expression doesn't evaluate to -1 (as almost every system function does in case of error).
 
@@ -56,5 +72,11 @@ _Noreturn extern void fatal(const char* fmt, ...);
 #define ENVVAR_LEN 50
 
 int string_to_no(char* arg);
+
+int channel_pos(int direction, int a, int b);
+
+
+
+void print_open_descriptors(void);
 
 #endif // MIMPI_COMMON_H
